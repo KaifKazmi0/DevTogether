@@ -8,7 +8,7 @@ import {
   Code2
 } from "lucide-react";
 
-function Sidebar() {
+function Sidebar({ isOpen, onClose }) {
   const navigation = [
     {
       name: "Overview",
@@ -33,7 +33,7 @@ function Sidebar() {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? "sidebar-open" : ""}`}>
       <div className="sidebar-brand">
         <Code2 size={26} />
         <h2>DevTogether</h2>
@@ -48,11 +48,12 @@ function Sidebar() {
 
             return (
               <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === "/"}
-                className={({ isActive }) =>
-                  isActive ? "nav-link active" : "nav-link"
+               key={item.path}
+               to={item.path}
+               end={item.path === "/"}
+               onClick={onClose}
+               className={({ isActive }) =>
+                 isActive ? "nav-link active" : "nav-link"
                 }
               >
                 <Icon size={19} />
