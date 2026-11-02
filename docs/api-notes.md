@@ -226,3 +226,4 @@ The following technical decisions require team alignment before implementation:
 3. **Session vs. Token Security:** Stateless JWT tokens stored in localStorage/cookie vs HTTP-only server sessions.
 4. **Soft Deletes:** Whether daily logs and tasks should support soft deletion (`deleted_at` timestamp) or physical row removal.
 5. **Scheduled Sync Cadence:** Frequency of automated background GitHub sync (e.g., hourly cron vs on-demand only).
+

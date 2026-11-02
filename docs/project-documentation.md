@@ -273,3 +273,4 @@ Environment variables should be created from `.env.example`:
 | **M6 — Security & Deploy**| Production Readiness | Final auth hardening, secrets handling, Docker Compose polish, free-tier deployment configuration. | Planned |
 
 *Note: Specific third-party cloud deployment targets, automated CI/CD configurations, and advanced features (e.g., real-time WebSockets, OAuth2 flows) are marked as `TBD` and will be decided prior to Milestone 6.*
+
