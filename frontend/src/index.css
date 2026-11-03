@@ -202,6 +202,172 @@ a {
   padding: 32px;
 }
 
+/* Dashboard cards */
+
+/* Dashboard Overview */
+
+.dashboard-heading {
+  margin-bottom: 28px;
+}
+
+.dashboard-heading h1 {
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.dashboard-heading p {
+  color: #a1a1aa;
+  font-size: 14px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background: #111113;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #a1a1aa;
+  font-size: 13px;
+}
+
+.stat-card-header svg {
+  color: #818cf8;
+}
+
+.stat-card h2 {
+  font-size: 27px;
+  margin: 20px 0 8px;
+}
+
+.stat-card p {
+  color: #71717a;
+  font-size: 12px;
+}
+
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Contribution Heatmap */
+
+.heatmap-card {
+  margin-top: 24px;
+  padding: 24px;
+  background: #111113;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+}
+
+.heatmap-header h2 {
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+
+.heatmap-header p {
+  color: #71717a;
+  font-size: 13px;
+}
+
+.heatmap-container {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+  overflow-x: auto;
+}
+
+.heatmap-days {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  color: #71717a;
+  font-size: 10px;
+  padding: 2px 0;
+}
+
+.heatmap-grid {
+  display: flex;
+  gap: 5px;
+}
+
+.heatmap-week {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.heatmap-cell {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.level-0 {
+  background: #27272a;
+}
+
+.level-1 {
+  background: #14532d;
+}
+
+.level-2 {
+  background: #15803d;
+}
+
+.level-3 {
+  background: #22c55e;
+}
+
+.level-4 {
+  background: #86efac;
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 18px;
+  color: #71717a;
+  font-size: 11px;
+}
+
+@media (max-width: 480px) {
+  .heatmap-card {
+    padding: 16px;
+  }
+
+  .heatmap-cell {
+    width: 10px;
+    height: 10px;
+  }
+
+  .heatmap-grid,
+  .heatmap-week {
+    gap: 4px;
+  }
+}
+
 /* Responsive */
 
 @media (max-width: 768px) {
