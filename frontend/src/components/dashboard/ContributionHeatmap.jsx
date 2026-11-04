@@ -1,4 +1,4 @@
-function ContributionHeatmap({ contributions }) {
+function ContributionHeatmap({ contributions, developerName }) {
   const weeks = [];
 
   for (let i = 0; i < contributions.length; i += 7) {
@@ -9,7 +9,7 @@ function ContributionHeatmap({ contributions }) {
     <section className="heatmap-card">
       <div className="heatmap-header">
         <div>
-          <h2>Contribution Activity</h2>
+          <h2>{developerName}'s Contribution Activity</h2>
           <p>Your activity over the last 12 weeks</p>
         </div>
       </div>
