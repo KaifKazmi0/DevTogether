@@ -1,6 +1,6 @@
-# DevTogether — API Planning Notes
+﻿# DevTogether â€” API Planning Notes
 
-> **STATUS: PLANNED — NOT IMPLEMENTED**  
+> **STATUS: PLANNED â€” NOT IMPLEMENTED**  
 > **Notice:** This document defines the initial architectural proposals and planned endpoint contracts for the DevTogether backend. **None of the endpoints, controllers, DTOs, services, or database models listed below are currently implemented.** All schemas, exact payloads, and database mappings are subject to revision and marked as `TBD` where decisions are pending.
 
 ---
@@ -49,10 +49,10 @@ Handles user credential verification, session/token lifecycle, and registration.
 
 | Method | Proposed Endpoint | Status | Description |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/auth/register` | `PLANNED — NOT IMPLEMENTED` | Register a new collaborator account (if self-registration is enabled). |
-| `POST` | `/api/v1/auth/login` | `PLANNED — NOT IMPLEMENTED` | Validate credentials and return an authentication token or establish session. |
-| `POST` | `/api/v1/auth/logout` | `PLANNED — NOT IMPLEMENTED` | Invalidate the current session or revoke token. |
-| `GET` | `/api/v1/auth/me` | `PLANNED — NOT IMPLEMENTED` | Return profile details and permissions of the currently authenticated user. |
+| `POST` | `/api/v1/auth/register` | `PLANNED â€” NOT IMPLEMENTED` | Register a new collaborator account (if self-registration is enabled). |
+| `POST` | `/api/v1/auth/login` | `PLANNED â€” NOT IMPLEMENTED` | Validate credentials and return an authentication token or establish session. |
+| `POST` | `/api/v1/auth/logout` | `PLANNED â€” NOT IMPLEMENTED` | Invalidate the current session or revoke token. |
+| `GET` | `/api/v1/auth/me` | `PLANNED â€” NOT IMPLEMENTED` | Return profile details and permissions of the currently authenticated user. |
 
 *Request / Response Schemas: `TBD`*
 
@@ -63,9 +63,9 @@ Provides endpoints for inspecting collaborator profiles and maintaining user pre
 
 | Method | Proposed Endpoint | Status | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/users` | `PLANNED — NOT IMPLEMENTED` | List project collaborators and their public profile information. |
-| `GET` | `/api/v1/users/{id}` | `PLANNED — NOT IMPLEMENTED` | Retrieve profile metadata for a specific collaborator. |
-| `PATCH` | `/api/v1/users/{id}` | `PLANNED — NOT IMPLEMENTED` | Update user settings (display name, GitHub username, timezone). Requires ownership. |
+| `GET` | `/api/v1/users` | `PLANNED â€” NOT IMPLEMENTED` | List project collaborators and their public profile information. |
+| `GET` | `/api/v1/users/{id}` | `PLANNED â€” NOT IMPLEMENTED` | Retrieve profile metadata for a specific collaborator. |
+| `PATCH` | `/api/v1/users/{id}` | `PLANNED â€” NOT IMPLEMENTED` | Update user settings (display name, GitHub username, timezone). Requires ownership. |
 
 *Notes:*
 - Timezone configuration (e.g., `Asia/Kolkata`, `America/New_York`) is essential for calculating active days and streak continuity near midnight boundaries.
@@ -73,27 +73,200 @@ Provides endpoints for inspecting collaborator profiles and maintaining user pre
 
 ---
 
-### 3.3 Daily Work Logs (`/api/v1/logs`)
-Allows collaborators to submit, view, modify, and delete daily work activity.
+### 3.3 Work Logs Management (`/api/work-logs`)
+Manages daily work logs and activity tracking with PostgreSQL persistence.
 
-| Method | Proposed Endpoint | Status | Description |
+> **STATUS: IMPLEMENTED**
+
+#### Endpoints Summary
+
+| Method | Endpoint | Status | Description |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/logs` | `PLANNED — NOT IMPLEMENTED` | Create a new manual work log entry for the authenticated user. |
-| `GET` | `/api/v1/logs` | `PLANNED — NOT IMPLEMENTED` | Query work logs with optional query filters (`userId`, `from`, `to`, `category`, `page`, `size`). |
-| `GET` | `/api/v1/logs/{id}` | `PLANNED — NOT IMPLEMENTED` | Fetch details of a single work log by its ID. |
-| `PATCH` | `/api/v1/logs/{id}` | `PLANNED — NOT IMPLEMENTED` | Update fields in an existing work log. Restricted to log owner. |
-| `DELETE`| `/api/v1/logs/{id}` | `PLANNED — NOT IMPLEMENTED` | Delete an existing work log. Restricted to log owner. |
+| `POST` | `/api/work-logs` | `IMPLEMENTED` | Create a new daily work log. |
+| `GET` | `/api/work-logs` | `IMPLEMENTED` | Retrieve all work logs ordered by date descending (supports optional query filters). |
+| `GET` | `/api/work-logs/{id}` | `IMPLEMENTED` | Fetch details of a single work log by its ID. |
+| `PUT` | `/api/work-logs/{id}` | `IMPLEMENTED` | Update all fields in an existing work log. |
+| `DELETE`| `/api/work-logs/{id}` | `IMPLEMENTED` | Delete an existing work log by ID. |
 
-*Proposed Log Fields (Subject to final JPA Entity design):*
-- `id`: Unique identifier (`TBD: UUID vs BIGSERIAL`)
-- `userId`: ID of the authoring collaborator
-- `workDate`: Date of activity (`YYYY-MM-DD`)
-- `summary`: Short text description of work done
-- `category`: Work classification (`Development`, `Bug Fix`, `Code Review`, `Testing`, `Documentation`, `Design`, `Planning`)
-- `hoursSpent`: Numerical hours spent (e.g., `0.5` to `16.0`)
-- `status`: Completion state (`Completed`, `In Progress`, `Blocked`)
-- `evidenceUrl`: Optional URL link to PR, ticket, document, or commit
-*Request / Response Schemas: `TBD`*
+#### Entity Schema (`work_logs` table)
+
+| Field | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `Long` (BIGINT) | Primary Key, Generated Identity | Auto-generated unique log identifier. |
+| `title` | `String` (VARCHAR(150)) | Required, max 150 chars, non-blank | Short summary title of work completed. |
+| `description` | `String` (VARCHAR(1000))| Optional, max 1000 chars | Detailed notes or breakdown of tasks done. |
+| `category` | `WorkLogCategory` (VARCHAR(50)) | Required, Enum | Work classification type. |
+| `logDate` | `LocalDate` (DATE) | Required, format `YYYY-MM-DD` | Date the work was performed. |
+| `hoursSpent` | `BigDecimal` (NUMERIC(4,2)) | Required, min `0.01`, max `24.00` | Decimal hours dedicated to the activity. |
+| `createdAt` | `LocalDateTime` (TIMESTAMP)| Required, auto-generated, unmodifiable | Record creation timestamp. |
+| `updatedAt` | `LocalDateTime` (TIMESTAMP)| Required, auto-updated | Record last modification timestamp. |
+
+#### Supported Work Log Categories (`WorkLogCategory` Enum)
+
+- `DEVELOPMENT` — Feature implementation and coding.
+- `LEARNING` — Tutorials, skill learning, reading documentation.
+- `RESEARCH` — Architecture exploration, library evaluation, spikes.
+- `BUG_FIX` — Investigating and resolving bugs/defects.
+- `DOCUMENTATION` — Writing technical docs, README, and architectural notes.
+- `TESTING` — Writing and executing unit, integration, or manual tests.
+- `CODE_REVIEW` — Reviewing pull requests and providing code feedback.
+- `PLANNING` — Roadmap planning, sprint grooming, scoping.
+
+#### Query Filters (`GET /api/work-logs`)
+
+Query parameters can be used independently or combined:
+- `?category=DEVELOPMENT`: Filter records by specific category.
+- `?startDate=2026-11-01&endDate=2026-11-05`: Filter records between two dates inclusive (ordered descending).
+- `?category=BUG_FIX&startDate=2026-11-01&endDate=2026-11-05`: Filter by category and date range simultaneously.
+
+#### Validation Rules
+
+- `title`: `@NotBlank`, maximum 150 characters.
+- `description`: Optional, maximum 1000 characters.
+- `category`: `@NotNull`, must match one of the 8 supported `WorkLogCategory` enum values.
+- `logDate`: `@NotNull`, ISO-8601 calendar date (`YYYY-MM-DD`).
+- `hoursSpent`: `@NotNull`, minimum `0.01`, maximum `24.00`.
+- Date range filtering requires both `startDate` and `endDate`; `startDate` must be on or before `endDate`.
+
+#### Request & Response Examples
+
+##### 1. Create Work Log
+- **Request:** `POST /api/work-logs`
+```json
+{
+  "title": "Implemented responsive dashboard navigation",
+  "description": "Implemented mobile sidebar and responsive navigation.",
+  "category": "DEVELOPMENT",
+  "logDate": "2026-11-05",
+  "hoursSpent": 3.50
+}
+```
+- **Response:** `HTTP 201 Created`
+```json
+{
+  "id": 1,
+  "title": "Implemented responsive dashboard navigation",
+  "description": "Implemented mobile sidebar and responsive navigation.",
+  "category": "DEVELOPMENT",
+  "logDate": "2026-11-05",
+  "hoursSpent": 3.50,
+  "createdAt": "2026-11-05T18:00:00",
+  "updatedAt": "2026-11-05T18:00:00"
+}
+```
+
+##### 2. Get All Work Logs / Filtered Work Logs
+- **Request:** `GET /api/work-logs?category=DEVELOPMENT`
+- **Response:** `HTTP 200 OK`
+```json
+[
+  {
+    "id": 1,
+    "title": "Implemented responsive dashboard navigation",
+    "description": "Implemented mobile sidebar and responsive navigation.",
+    "category": "DEVELOPMENT",
+    "logDate": "2026-11-05",
+    "hoursSpent": 3.50,
+    "createdAt": "2026-11-05T18:00:00",
+    "updatedAt": "2026-11-05T18:00:00"
+  }
+]
+```
+
+##### 3. Get Work Log by ID
+- **Request:** `GET /api/work-logs/1`
+- **Response:** `HTTP 200 OK` (or `HTTP 404 Not Found` if missing)
+
+##### 4. Update Work Log
+- **Request:** `PUT /api/work-logs/1`
+```json
+{
+  "title": "Refined responsive dashboard navigation",
+  "description": "Added collapsed state animations and unit tests.",
+  "category": "DEVELOPMENT",
+  "logDate": "2026-11-05",
+  "hoursSpent": 4.00
+}
+```
+- **Response:** `HTTP 200 OK`
+
+##### 5. Delete Work Log
+- **Request:** `DELETE /api/work-logs/1`
+- **Response:** `HTTP 204 No Content`
+
+#### Standard Error Responses
+
+Errors follow the uniform `ErrorResponse` structure:
+- **Validation Failure (`HTTP 400 Bad Request`):**
+```json
+{
+  "timestamp": "2026-11-05T18:00:00",
+  "status": 400,
+  "error": "Validation Failed",
+  "message": "Validation failed for request parameters",
+  "path": "/api/work-logs",
+  "validationErrors": [
+    {
+      "field": "title",
+      "message": "Title is required"
+    },
+    {
+      "field": "hoursSpent",
+      "message": "Hours spent must not exceed 24 hours"
+    }
+  ]
+}
+```
+- **Resource Not Found (`HTTP 404 Not Found`):**
+```json
+{
+  "timestamp": "2026-11-05T18:00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Work log not found with ID: 999",
+  "path": "/api/work-logs/999"
+}
+```
+- **Invalid Date Range (`HTTP 400 Bad Request`):**
+```json
+{
+  "timestamp": "2026-11-05T18:00:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Start date (2026-11-10) cannot be after end date (2026-11-05).",
+  "path": "/api/work-logs"
+}
+```
+
+#### PostgreSQL Setup Requirements
+
+The backend uses PostgreSQL persistence with Spring Data JPA.
+
+##### Connection Configuration (`application.properties`):
+```properties
+spring.datasource.url=${DB_URL:jdbc:postgresql://localhost:5432/devtogether}
+spring.datasource.username=${DB_USERNAME:postgres}
+spring.datasource.password=${DB_PASSWORD:}
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+```
+
+##### PostgreSQL Database Setup:
+1. Ensure PostgreSQL is installed and running on port 5432.
+2. Create the target database:
+   ```sql
+   CREATE DATABASE devtogether;
+   ```
+3. Set environment variables (or configure your shell/IDE run configuration):
+   - `DB_URL`: `jdbc:postgresql://localhost:5432/devtogether`
+   - `DB_USERNAME`: your postgres username (default: `postgres`)
+   - `DB_PASSWORD`: your postgres password
+4. When the backend starts up, Hibernate `ddl-auto=update` automatically creates or updates the `work_logs` and `users` tables.
+5. In-memory H2 database is used automatically for unit and integration testing without requiring a live PostgreSQL instance.
 
 ---
 
@@ -102,9 +275,9 @@ Aggregates activity data for calendar heatmaps and streak metrics.
 
 | Method | Proposed Endpoint | Status | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/contributions/heatmap` | `PLANNED — NOT IMPLEMENTED` | Retrieve daily contribution counts/intensities per user over a given year (`?year=YYYY`) or range. |
-| `GET` | `/api/v1/contributions/streaks` | `PLANNED — NOT IMPLEMENTED` | Calculate and return current streak, longest streak, and active day counts per collaborator. |
-| `GET` | `/api/v1/contributions/summary` | `PLANNED — NOT IMPLEMENTED` | High-level summary of total logs, total hours, and imported GitHub events. |
+| `GET` | `/api/v1/contributions/heatmap` | `PLANNED â€” NOT IMPLEMENTED` | Retrieve daily contribution counts/intensities per user over a given year (`?year=YYYY`) or range. |
+| `GET` | `/api/v1/contributions/streaks` | `PLANNED â€” NOT IMPLEMENTED` | Calculate and return current streak, longest streak, and active day counts per collaborator. |
+| `GET` | `/api/v1/contributions/summary` | `PLANNED â€” NOT IMPLEMENTED` | High-level summary of total logs, total hours, and imported GitHub events. |
 
 *Design Notes:*
 - Activity intensities should account for both manual logs and GitHub events without conflating them into a single misleading "productivity score".
@@ -118,7 +291,7 @@ Provides comparative statistics between the two developers across synchronized w
 
 | Method | Proposed Endpoint | Status | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/contributions/weekly` | `PLANNED — NOT IMPLEMENTED` | Retrieve side-by-side weekly statistics (active days, logged hours, completed tasks) for a date range (`?from=YYYY-MM-DD&to=YYYY-MM-DD`). |
+| `GET` | `/api/v1/contributions/weekly` | `PLANNED â€” NOT IMPLEMENTED` | Retrieve side-by-side weekly statistics (active days, logged hours, completed tasks) for a date range (`?from=YYYY-MM-DD&to=YYYY-MM-DD`). |
 
 *Request / Response Schemas: `TBD`*
 
@@ -129,11 +302,11 @@ Enables lightweight tracking of project tasks.
 
 | Method | Proposed Endpoint | Status | Description |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/tasks` | `PLANNED — NOT IMPLEMENTED` | Create a new project task. |
-| `GET` | `/api/v1/tasks` | `PLANNED — NOT IMPLEMENTED` | Retrieve tasks with optional filters (`status`, `assigneeId`, `projectId`). |
-| `GET` | `/api/v1/tasks/{id}` | `PLANNED — NOT IMPLEMENTED` | Retrieve details for a specific task. |
-| `PATCH` | `/api/v1/tasks/{id}` | `PLANNED — NOT IMPLEMENTED` | Update task properties, assignees, or status (`Todo`, `In Progress`, `Done`). |
-| `DELETE`| `/api/v1/tasks/{id}` | `PLANNED — NOT IMPLEMENTED` | Delete a project task. |
+| `POST` | `/api/v1/tasks` | `PLANNED â€” NOT IMPLEMENTED` | Create a new project task. |
+| `GET` | `/api/v1/tasks` | `PLANNED â€” NOT IMPLEMENTED` | Retrieve tasks with optional filters (`status`, `assigneeId`, `projectId`). |
+| `GET` | `/api/v1/tasks/{id}` | `PLANNED â€” NOT IMPLEMENTED` | Retrieve details for a specific task. |
+| `PATCH` | `/api/v1/tasks/{id}` | `PLANNED â€” NOT IMPLEMENTED` | Update task properties, assignees, or status (`Todo`, `In Progress`, `Done`). |
+| `DELETE`| `/api/v1/tasks/{id}` | `PLANNED â€” NOT IMPLEMENTED` | Delete a project task. |
 
 *Design Notes:*
 - A task is considered completed solely when its status transitions to `Done`.
@@ -147,9 +320,9 @@ Controls repository synchronization and inspects external event ingestion.
 
 | Method | Proposed Endpoint | Status | Description |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/github/sync` | `PLANNED — NOT IMPLEMENTED` | Trigger an on-demand GitHub synchronization run for the configured repository. |
-| `GET` | `/api/v1/github/sync-status` | `PLANNED — NOT IMPLEMENTED` | Retrieve the execution status, timestamp, and error log of recent synchronization runs. |
-| `GET` | `/api/v1/github/events` | `PLANNED — NOT IMPLEMENTED` | Retrieve imported GitHub events (commits, PRs, reviews, issues) with pagination and filtering. |
+| `POST` | `/api/v1/github/sync` | `PLANNED â€” NOT IMPLEMENTED` | Trigger an on-demand GitHub synchronization run for the configured repository. |
+| `GET` | `/api/v1/github/sync-status` | `PLANNED â€” NOT IMPLEMENTED` | Retrieve the execution status, timestamp, and error log of recent synchronization runs. |
+| `GET` | `/api/v1/github/events` | `PLANNED â€” NOT IMPLEMENTED` | Retrieve imported GitHub events (commits, PRs, reviews, issues) with pagination and filtering. |
 
 *Design Notes:*
 - Synchronization requests must handle GitHub REST API rate limits and leverage pagination.
