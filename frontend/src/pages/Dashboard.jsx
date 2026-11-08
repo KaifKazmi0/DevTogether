@@ -1,16 +1,14 @@
 import { Flame, GitCommit, Clock, CheckCircle } from "lucide-react";
 
 import StatCard from "../components/dashboard/StatCard";
-
 import RecentActivity from "../components/dashboard/RecentActivity";
-import { recentActivities } from "../features/dashboard/dashboardData";
-
-import { developerHeatmaps } from "../features/dashboard/dashboardData";
-
 import ContributionHeatmap from "../components/dashboard/ContributionHeatmap";
+
 import {
   dashboardStats,
+  developerHeatmaps,
 } from "../features/dashboard/dashboardData";
+import { getWorkLogs } from "../features/work-logs/workLogService";
 
 const icons = {
   contributions: GitCommit,
@@ -20,7 +18,8 @@ const icons = {
 };
 
 function Dashboard() {
-  
+  const recentLogs = getWorkLogs().slice(0, 5);
+
   return (
     <div className="dashboard">
       <div className="dashboard-heading">
@@ -29,6 +28,7 @@ function Dashboard() {
           <p>Track your progress and contributions.</p>
         </div>
       </div>
+
       <div className="stats-grid">
         {dashboardStats.map((stat) => (
           <StatCard
@@ -41,8 +41,6 @@ function Dashboard() {
         ))}
       </div>
 
-
-      {/* //adding developers heatmap */}
       <div className="developer-heatmaps">
         {developerHeatmaps.map((developer) => (
           <ContributionHeatmap
@@ -53,8 +51,7 @@ function Dashboard() {
         ))}
       </div>
 
-      
-      <RecentActivity activities={recentActivities} />
+      <RecentActivity activities={recentLogs} />
     </div>
   );
 }
