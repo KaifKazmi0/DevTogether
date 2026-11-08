@@ -10,7 +10,6 @@ import { developerHeatmaps } from "../features/dashboard/dashboardData";
 import ContributionHeatmap from "../components/dashboard/ContributionHeatmap";
 import {
   dashboardStats,
-  generateContributionData,
 } from "../features/dashboard/dashboardData";
 
 const icons = {
@@ -21,7 +20,7 @@ const icons = {
 };
 
 function Dashboard() {
-  const contributions = generateContributionData();
+  
   return (
     <div className="dashboard">
       <div className="dashboard-heading">
